@@ -8,8 +8,12 @@ class BrokerThread(threading.Thread):
     
     def run(self):
         while True:
+            #BLOCKS UNTIL MESSAGE IS AVAILABLE
             tpl = self.message_queue.get() #(sender_name, message, destination_name)
+            #GET CONNECTION TO DESTINATION
             c = self.get_connection(tpl[2])
+            #IF NO CONNECTION IS ESTABLISHED YET, PUT BACK IN QUEUE
+            #ELSE SEND MESSAGE TO DESTINATION
             if c == "no_connection":
                 self.message_queue.put(tpl)
             else:
