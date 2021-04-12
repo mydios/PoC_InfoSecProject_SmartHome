@@ -2,6 +2,24 @@ import threading
 from datetime import datetime
 
 class ListenerThread(threading.Thread):
+    """
+    Initialization requires:
+        - l =      Listener instance
+
+        - mq =     Queue instance from queue library
+                    All incomming messages are inserted into this queue so that they can be routed by
+                    the BrokerThread thread of the Broker instance
+        
+        - n =       str
+                    Name used for communication by the process corresponding to this listener.
+        
+        - h =       list
+                    History list of all messages that is maintained by the Broker instance.
+        
+        - st =      datetime.datetime.timestamp 
+                    A timestamp of the zero time point to be able to order messages chronologically
+
+    """
     def __init__(self, l, mq, n, h, st):
         super().__init__(daemon=True)
         self.message_queue = mq
@@ -14,8 +32,9 @@ class ListenerThread(threading.Thread):
     def run(self):
         self.connection = self.listener.accept()
 
-        #first communication is identification to broker
-        tpl = self.connection.recv() #(sender_name, message, destination_name)
+        #first communication of a process is always identification to broker
+        #initialized name is always overwritten by the name communicated by the corresponding process
+        tpl = self.connection.recv() #(sender_name, sender_name, destination_name) = (string, string, None)
         client_name = tpl[1]
         self.name = client_name
 

@@ -1,6 +1,15 @@
 import threading
 
 class BrokerThread(threading.Thread):
+    """
+    Initialization requires:
+        - mq =      Queue instance from queue library
+                    All incomming messages are inserted into this queue by the ListenerThread threads so that they can be routed by
+                    this thread.
+        
+        - lt =      list
+                    A list of the all Listener instances managed by this Broker instance.
+    """
     def __init__(self, mq, lt):
         super().__init__(daemon=True)
         self.message_queue = mq
@@ -21,6 +30,12 @@ class BrokerThread(threading.Thread):
 
     
     def get_connection(self, dst):
+        """
+            This function retrieves the connection corresponding to the intended destination
+
+                - dst =     str
+                            The communication name of the process that a message is to be routed to.
+        """
         for t in self.listener_threads:
             if t.name == dst:
                 return t.connection

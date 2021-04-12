@@ -4,6 +4,14 @@ from threading import Thread
 import time
 
 class DeviceSenderThread(Thread):
+    """
+    Initialization requires:
+        - dvc =     SmartDevice instance
+                    The SmartDevice instance for which this thread is performing the receive functionality
+        
+        - dest =    str
+                    The communication name of the ControlPlatform instance that this SmartDevice is sending updates to
+    """
     def __init__(self, dest, dvc):
         super().__init__(daemon=True)
         self.device = dvc
