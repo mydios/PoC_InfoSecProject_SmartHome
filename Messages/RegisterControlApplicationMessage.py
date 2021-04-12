@@ -13,3 +13,6 @@ class RegisterControlApplicationMessage(object):
 
     def __str__(self):
         return type(self).__name__ + '|' + 'APPLICATION_NAME=' + self.application_name + '|' + 'ENCRYPTION_DETAILS=' + self.encryption_type + ', ' + str(self.encryption_args)
+
+    def __repr__(self):
+        return self.__str__()

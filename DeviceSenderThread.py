@@ -19,7 +19,7 @@ class DeviceSenderThread(Thread):
     
     def run(self):
         while True:
-            #SEND A STATE UPDATE OF THE DEVICE TO THE CONTROL PLATFORM EVERY 60 seconds
-            message = StateUpdateMessage(self.device.device_states)
+            #SEND A STATE UPDATE OF THE DEVICE TO THE CONTROL PLATFORM EVERY 5 SECONDS
+            message = StateUpdateMessage(self.device.name, self.device.device_states)
             self.device.post_message(message, self.destination)
-            time.sleep(60)
+            time.sleep(5)

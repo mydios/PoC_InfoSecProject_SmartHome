@@ -1,9 +1,13 @@
 from multiprocessing.connection import Listener
 from queue import Queue
 from datetime import datetime
+import os
+from tabulate import tabulate
 
 from ListenerThread import ListenerThread
 from BrokerThread import BrokerThread
+
+from Messages.StateUpdateMessage import StateUpdateMessage
 
 class Broker(object):
     """
@@ -39,6 +43,10 @@ class Broker(object):
          
 
     def start(self):
+        try:
+            os.system('clear')
+        except:
+            pass
         #START ALL LISTENER THREADS
         for t in self.threads:
             t.start()
@@ -64,9 +72,22 @@ class Broker(object):
             
             # PRINT A HISTORY OF ALL MESSAGES ROUTED
             if u_in == 'print_messages':
+                """
                 print("SENDER|MESSAGE|DESTINATION|TIMESTAMP")
                 for m in self.history:
                     print(m)
+                """
+                print(tabulate(self.history, headers = ["SENDER", "MESSAGE", "DESTINATION", "TIMESTAMP"]))
+                continue
+
+            # PRINT A HISTORY OF ALL NON-UPDATE MESSAGES ROUTED
+            if u_in == 'print_messages -no_updates':
+                #print("SENDER|MESSAGE|DESTINATION|TIMESTAMP")
+                d = []
+                for m in self.history:
+                    if not isinstance(m[1], StateUpdateMessage):
+                        d.append(m)
+                print(tabulate(d, headers = ["SENDER", "MESSAGE", "DESTINATION", "TIMESTAMP"]))
                 continue
             
             print("Unrecognized command")

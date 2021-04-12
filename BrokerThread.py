@@ -27,6 +27,7 @@ class BrokerThread(threading.Thread):
                 self.message_queue.put(tpl)
             else:
                 c.send(tpl)
+                #print("passing message on to "+tpl[-1])
 
     
     def get_connection(self, dst):

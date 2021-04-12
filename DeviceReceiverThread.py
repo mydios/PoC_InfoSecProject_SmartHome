@@ -17,11 +17,6 @@ class DeviceReceiverThread(Thread):
             #All other messages are dropped and in this case something is printed to the terminal
             tpl = self.device.receive_message()
             message = tpl[1]
-            if type(message).__name__ != "DeviceCommandMessage":
-                print("Received a message that should nog arrive at "+self.device.name)
-                continue
-            if message.device_name != self.device.name:
-                print("Received a message that should nog arrive at "+self.device.name)
-                continue
-            self.device._change_state(message.device_state_name, message.device_state.state_value)
+            if isinstance(message, DeviceCommandMessage):
+                self.device._change_state(message.device_state_name, message.device_state_value)
 

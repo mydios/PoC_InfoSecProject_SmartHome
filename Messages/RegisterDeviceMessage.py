@@ -15,3 +15,6 @@ class RegisterDeviceMessage(object):
 
     def __str__(self):
         return type(self).__name__ + '|' + 'DEVICE_NAME=' + self.device_name + '|' + 'COMMAND_MANUAL=' + str(self.command_manual) + '|' + 'ENCRYPTION_DETAILS=' + self.encryption_type + ', ' + str(self.encryption_args)
+
+    def __repr__(self):
+        return self.__str__()
