@@ -81,6 +81,10 @@ class ControlPlatform(CommunicationInterface):
         try:
             os.system('clear')
         except:
+            try:
+                os.system('cls')#WINDOWS
+            except:
+                pass
             pass
         # Receiver thread
         self.thread.start()
@@ -96,6 +100,10 @@ class ControlPlatform(CommunicationInterface):
                     os.system('clear')
                     continue
                 except:
+                    try:
+                        os.system('cls')#WINDOWS
+                    except:
+                        pass
                     pass
             # SHUT DOWN THE DEVICE
             if u_in == 'exit':

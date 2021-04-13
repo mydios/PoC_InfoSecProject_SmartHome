@@ -82,6 +82,10 @@ class SmartDevice(CommunicationInterface):
         try:
             os.system('clear')
         except:
+            try:
+                os.system('cls')#WINDOWS
+            except:
+                pass
             pass
         # register with control platform
         self._register()
@@ -99,6 +103,10 @@ class SmartDevice(CommunicationInterface):
                     os.system('clear')
                     continue
                 except:
+                    try:
+                        os.system('cls')#WINDOWS
+                    except:
+                        pass
                     pass
             # SHUT DOWN THE DEVICE
             if u_in == 'exit':

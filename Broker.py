@@ -46,6 +46,10 @@ class Broker(object):
         try:
             os.system('clear')
         except:
+            try:
+                os.system('cls')#WINDOWS
+            except:
+                pass
             pass
         #START ALL LISTENER THREADS
         for t in self.threads:
@@ -64,6 +68,10 @@ class Broker(object):
                     os.system('clear')
                     continue
                 except:
+                    try:
+                        os.system('cls')#WINDOWS
+                    except:
+                        pass
                     pass
             
             # SHUT DOWN THE DEVICE
