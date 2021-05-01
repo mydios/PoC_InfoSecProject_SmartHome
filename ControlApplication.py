@@ -5,6 +5,8 @@ from ControlApplicationReceiverThread import ControlApplicationReceiverThread
 
 from threading import Semaphore
 import os
+import time
+import uuid
 
 
 class ControlApplication(CommunicationInterface):
@@ -27,6 +29,10 @@ class ControlApplication(CommunicationInterface):
         self.devices_information = {}
 
         self.semaphore = Semaphore()
+        
+        # Kerberos
+        self.client_id = 0
+        self.tgs_id = 1
 
         self.thread = ControlApplicationReceiverThread(self)
 
@@ -58,6 +64,27 @@ class ControlApplication(CommunicationInterface):
         message = DeviceCommandMessage(
             device_name, state_name, new_state_value, self.name)
         self.post_message(message, self.control_name)
+
+    def handle_auth_response(self, message):
+        session_data = self.decode(None, message.session_data) # TO DECTYPT WITH PRIVATE KEY OF CLIENT
+        
+        if session_data['tgs_id'] == self.tgs_id and session_data['nonce'] == self.nonce: # check nonce to avoid replay attacks
+            self.tgt = message.tgt
+            self.tgs_session_key = session_data['session_key']
+            
+        else:
+            # invalid or old nonce, ignore message
+            pass
+    
+    def generate_nonce(self):
+        # https://stackoverflow.com/questions/5590170/what-is-the-standard-method-for-generating-a-nonce-in-python
+        return uuid.uuid4().hex
+    
+    def decode(self, key, data):
+        # TO DO
+        time.sleep(0.5)
+        # don't use eval in final version
+        return eval(bytes.fromhex(data).decode('utf-8'))
 
     def start(self):
         try:
