@@ -27,19 +27,19 @@ class KAuthServer(CommunicationInterface):
                 
                 nonce = request.nonce
                 tgs_id = request.tgs_id
-                session_key = self.generate_session_key()
+                tgs_session_key = self.generate_session_key()
                 
-                tgt = self.encrypt(None, { # TO ENCRYPT WITH PUBLIC KEY OF TGS
+                tgt = self.encrypt_asymm(None, { # TO ENCRYPT WITH PUBLIC KEY OF TGS
                         'flag': 0,
-                        'session_key': session_key,
+                        'session_key': tgs_session_key,
                         'client_realm': '',
                         'client_id': client_id,
                         'client_address': sender,
                         'times': ''
                         })
     
-                session_data = self.encrypt(None, { # TO ENCTYPT WITH PUBLIC KEY OF CLIENT
-                        'session_key': session_key,
+                session_data = self.encrypt_asymm(None, { # TO ENCTYPT WITH PUBLIC KEY OF CLIENT
+                        'session_key': tgs_session_key,
                         'times': '',
                         'nonce': nonce,
                         'tgs_realm': '',
@@ -60,11 +60,10 @@ class KAuthServer(CommunicationInterface):
     def generate_session_key(self):
         # TO DO
         time.sleep(0.5)
-        return None
+        return 'deadbeef'
     
-    def encrypt(self, key, data):
+    def encrypt_asymm(self, key, data):
         # TO DO
-        time.sleep(0.5)
         return str(data).encode('utf-8').hex()
     
     def start(self):

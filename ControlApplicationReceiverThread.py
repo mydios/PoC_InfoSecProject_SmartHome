@@ -1,6 +1,7 @@
 from threading import Thread
 from Messages.StateUpdateMessage import StateUpdateMessage
 from Messages.KAuthResponseMessage import KAuthResponseMessage
+from Messages.KTicketResponseMessage import KTicketResponseMessage
 
 
 class ControlApplicationReceiverThread(Thread):
@@ -27,3 +28,7 @@ class ControlApplicationReceiverThread(Thread):
             elif isinstance(message, KAuthResponseMessage):
                 if message.client_id == self.control_application.client_id: # check client id
                     self.control_application.handle_auth_response(message)
+            
+            elif isinstance(message, KTicketResponseMessage):
+                if message.client_id == self.control_application.client_id: # check client id
+                    self.control_application.handle_ticket_response(message)
