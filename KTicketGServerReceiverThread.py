@@ -3,7 +3,7 @@ from Messages.KTicketRequestMessage import KTicketRequestMessage
 
 class KTicketGServerReceiverThread(Thread):
     """
-    
+    Receiver thread of the Kerberos Ticket-Granting Server.
     """
     def __init__(self, ticket_server):
         super().__init__(daemon=True)

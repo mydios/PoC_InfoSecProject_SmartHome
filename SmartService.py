@@ -1,5 +1,5 @@
 from CommunicationInterface import CommunicationInterface
-from SmartServiceReceiverThread import SmartServiceReceiverThread
+from ServiceReceiverThread import ServiceReceiverThread
 from Messages.KServiceResponseMessage import KServiceResponseMessage
 
 import os
@@ -7,22 +7,36 @@ import os
 
 class SmartService(CommunicationInterface):
     """
-    
+    SmartService contains data that can be retrieved or updated by a client (= ControlApplication).
+    Kerberos is used to authenticate the client.
     """
-    def __init__(self, addr, name, service_id):
+    def __init__(self, addr, name, service_id, data):
         super().__init__(addr, name)
         
+        self.data = data
+        
         # Kerberos
+        ###########
+        
         self.service_id = service_id # id of the service
         
         # dictionary with connection data per client
         # {client_id : {subkey, sequence_nr}}
         self.clients = {}
         
+        ###########
+        
         # thread that manages all incoming messages
-        self.thread = SmartServiceReceiverThread(self)
-      
+        self.thread = ServiceReceiverThread(self)
+    
+    # Kerberos
+    ##################################################
+    
     def handle_service_request(self, sender, request):
+        """
+        Client/server dialogue, slide 26 (--> V)
+        + slide 27 (V -->)
+        """
         sgt = self.decrypt_asymm(None, request.sgt) # TO DECRYPT WITH PRIVATE KEY OF SERVICE
         client_address = sgt['client_address']
         
@@ -66,6 +80,8 @@ class SmartService(CommunicationInterface):
         # TO DO
         # don't use eval in final version, not safe
         return eval(bytes.fromhex(data).decode('utf-8'))
+    
+    ##################################################
     
     def start(self):
         try:

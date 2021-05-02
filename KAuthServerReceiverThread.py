@@ -3,7 +3,7 @@ from Messages.KAuthRequestMessage import KAuthRequestMessage
 
 class KAuthServerReceiverThread(Thread):
     """
-    
+    Receiver thread of the Kerberos Authentication Server.
     """
     def __init__(self, auth_server):
         super().__init__(daemon=True)

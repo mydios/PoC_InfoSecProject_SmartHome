@@ -1,4 +1,4 @@
-#A network.py, example_as.py and example_tgs.py process should be activated when running this test
+#A network.py, example_as.py, example_tgs.py and example_photos.py process should be activated when running this test
 import time
 from ControlApplication import ControlApplication
 

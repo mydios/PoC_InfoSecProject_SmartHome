@@ -8,7 +8,7 @@ import time
 
 class KAuthServer(CommunicationInterface):
     """
-    
+    Kerberos Authentication Server (AS) + Database.
     """
     def __init__(self, addr, name):
         super().__init__(addr, name)
@@ -20,6 +20,10 @@ class KAuthServer(CommunicationInterface):
         self.thread = KAuthServerReceiverThread(self)
       
     def handle_auth_request(self, sender, request):
+        """
+        Authentication dialogue, slide 22 (--> AS)
+        + slide 23 (AS -->)
+        """
         try:
             client_id = request.client_id
             

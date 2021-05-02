@@ -1,5 +1,6 @@
 class KTicketResponseMessage(object):
     #SENT FROM KERBEROS TICKET-GRANTING SERVER TO CONTROL APPLICATION
+    #slide 25 (TGS --> C)
 
     def __init__(self, client_realm, client_id, sgt, session_data):
         # string

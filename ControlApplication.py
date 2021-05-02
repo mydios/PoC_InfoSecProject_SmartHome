@@ -35,12 +35,16 @@ class ControlApplication(CommunicationInterface):
         self.semaphore = Semaphore()
         
         # Kerberos
+        ###########
+        
         self.client_id = 0 # id of the user
         self.tgs_id = 1 # id of the ticket-granting server
         
         # dictionary with connection data per service
         # {service_id : {sgt, sg_session_key, subkey, sequence_nr}}
         self.services = {}
+        
+        ###########
 
         self.thread = ControlApplicationReceiverThread(self)
 
@@ -74,13 +78,22 @@ class ControlApplication(CommunicationInterface):
         self.post_message(message, self.control_name)
 
     # Kerberos
+    #######################################################
+    
     def init_auth_request(self):
+        """
+        Authentication dialogue, slide 22 (C -->)
+        Executed once per user session
+        """
         self.nonce = self.generate_nonce()
         
         request = KAuthRequestMessage('', self.client_id, '', self.tgs_id, '', self.nonce)
         self.post_message(request, 'k_auth_server')
 
     def handle_auth_response(self, message):
+        """
+        Authentication dialogue, slide 23 (--> C)
+        """
         session_data = self.decrypt_asymm(None, message.session_data) # TO DECTYPT WITH PRIVATE KEY OF CLIENT
         
         if session_data['tgs_id'] == self.tgs_id and session_data['nonce'] == self.nonce: # check nonce to avoid replay attacks
@@ -96,6 +109,10 @@ class ControlApplication(CommunicationInterface):
             pass
     
     def init_ticket_request(self, service_id):
+        """
+        TGS dialogue, slide 24 (C -->)
+        Executed once per type of service
+        """
         if self.tgt and self.tg_session_key: # check if tgs communication is possible
             self.nonce = self.generate_nonce()
             
@@ -112,6 +129,9 @@ class ControlApplication(CommunicationInterface):
             pass
     
     def handle_ticket_response(self, message):
+        """
+        TGS dialogue, slide 25 (--> C)
+        """
         session_data = self.decrypt_symm(self.tg_session_key, message.session_data) # TO DECRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
         
         if session_data['nonce'] == self.nonce: # check nonce to avoid replay attacks
@@ -132,6 +152,10 @@ class ControlApplication(CommunicationInterface):
             pass
     
     def init_service_request(self, service_id, service_name):
+        """
+        Client/server dialogue, slide 26 (C -->)
+        Once per service session
+        """
         try:
             service_conn_data = self.services[service_id]
             sgt = service_conn_data['sgt']
@@ -161,6 +185,9 @@ class ControlApplication(CommunicationInterface):
             return
     
     def handle_service_response(self, message):
+        """
+        Client/server dialogue, slide 27 (--> C)
+        """
         try:
             service_conn_data = self.services[self.pending_service_id]
             self.pending_service_id = None
@@ -173,7 +200,7 @@ class ControlApplication(CommunicationInterface):
         auth_data = self.decrypt_symm(sg_session_key, message.auth_data) # TO DECRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
         
         if auth_data['subkey'] == service_conn_data['subkey'] and auth_data['sequence_nr'] == service_conn_data['sequence_nr']:
-            print('OK')
+            print('AUTH OK')
         else:
             # invalid or old sequence number, ignore message
             pass
@@ -199,6 +226,8 @@ class ControlApplication(CommunicationInterface):
         # TO DO
         # don't use eval in final version, not safe
         return eval(bytes.fromhex(data).decode('utf-8'))
+
+    #######################################################
 
     def start(self):
         try:

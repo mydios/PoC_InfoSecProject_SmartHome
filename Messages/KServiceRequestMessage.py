@@ -1,5 +1,6 @@
 class KServiceRequestMessage(object):
     #SENT FROM CONTROL APPLICATION TO SERVICE
+    #slide 26 (C --> V)
 
     def __init__(self, options, sgt, auth_data):
         # string

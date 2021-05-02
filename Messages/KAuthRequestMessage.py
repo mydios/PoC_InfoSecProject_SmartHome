@@ -1,5 +1,6 @@
 class KAuthRequestMessage(object):
     #SENT FROM CONTROL APPLICATION TO KERBEROS AUTHENTICATION SERVER
+    #slide 22 (C --> AS)
 
     def __init__(self, options, client_id, client_realm, tgs_id, times, nonce):
         # string

@@ -8,7 +8,7 @@ import time
 
 class KTicketGServer(CommunicationInterface):
     """
-    
+    Kerberos Ticket-Granting Server (TGS).
     """
     def __init__(self, addr, name):
         super().__init__(addr, name)
@@ -17,6 +17,10 @@ class KTicketGServer(CommunicationInterface):
         self.thread = KTicketGServerReceiverThread(self)
       
     def handle_ticket_request(self, sender, request):
+        """
+        TGS dialogue, slide 24 (--> TGS)
+        + slide 25 (TGS -->)
+        """
         tgt = self.decrypt_asymm(None, request.tgt) # TO DECRYPT WITH PRIVATE KEY OF TGS
         client_address = tgt['client_address']
         

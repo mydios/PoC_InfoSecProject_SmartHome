@@ -1,5 +1,6 @@
 class KServiceResponseMessage(object):
     #SENT FROM SERVICE TO CONTROL APPLICATION
+    #slide 27 (V --> C)
 
     def __init__(self, auth_data):
         # encrypted data

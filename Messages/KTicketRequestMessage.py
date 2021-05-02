@@ -1,5 +1,6 @@
 class KTicketRequestMessage(object):
     #SENT FROM CONTROL APPLICATION TO KERBEROS TICKET-GRANTING SERVER
+    #slide 24 (C --> TGS)
 
     def __init__(self, options, service_id, times, nonce, tgt, auth_data):
         # string
