@@ -28,7 +28,7 @@ class ControlPlatformReceiverThread(Thread):
 
             elif isinstance(message, RegisterControlApplicationMessage):
                 self.control_platform.register_control_application(
-                    message.application_name, message.encryption_type, message.encryption_args)
+                    message.application_name, message.credentials, message.authorisation_level, message.encryption_type, message.encryption_args)
 
             elif isinstance(message, StateUpdateMessage):
                 self.control_platform.handle_state_update(message)

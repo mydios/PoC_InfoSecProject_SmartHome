@@ -20,8 +20,12 @@ class ControlApplication(CommunicationInterface):
                                                                     ControlApplication instance will register with. 
     """
 
-    def __init__(self, addr, name, control_platform_name="control_platform", pw='strong_password', encryption_type="no_encryption", encryption_args=[]):
+    def __init__(self, addr, name, credentials, authorisation_level="admin", control_platform_name="control_platform", pw='strong_password', encryption_type="no_encryption", encryption_args=[]):
         super().__init__(addr, name, pw, encryption_type, encryption_args)
+        self.credentials = credentials
+
+        self.authorisation_level = {"admin":0, "user":1, "guest":2}[authorisation_level]
+
         self.control_name = control_platform_name
 
         self.devices_information = {}
@@ -38,7 +42,7 @@ class ControlApplication(CommunicationInterface):
         """
         # THE ENCRYPTION SUPPORTED BY THIS DEVICE IS INCORPORATED IN THE REGISTER MESSAGE
         content = RegisterControlApplicationMessage(
-            self.name, self.encryption_type, self.encryption_args)
+            self.name, self.credentials, self.authorisation_level, self.encryption_type, self.encryption_args)
         self.post_message(message=content, destination=self.control_name)
 
     def update_device_state(self, device_name, new_states):
