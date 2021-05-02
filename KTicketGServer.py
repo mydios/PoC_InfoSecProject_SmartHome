@@ -18,28 +18,29 @@ class KTicketGServer(CommunicationInterface):
       
     def handle_ticket_request(self, sender, request):
         tgt = self.decrypt_asymm(None, request.tgt) # TO DECRYPT WITH PRIVATE KEY OF TGS
-        tgs_session_key = tgt['session_key']
         client_address = tgt['client_address']
+        
         if client_address == sender: # check if sender address is correct
-            auth_data = self.decrypt_symm(tgs_session_key, request.auth_data) # TO DECTYPT WITH SYMMETRIC TGS SESSION KEY
+            tg_session_key = tgt['session_key']
+            auth_data = self.decrypt_symm(tg_session_key, request.auth_data) # TO DECTYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
             client_id = tgt['client_id']
             
             if client_id == auth_data['client_id']: # check if client id is correct
                 service_id = request.service_id
                 nonce = request.nonce
-                service_session_key = self.generate_session_key()
+                sg_session_key = self.generate_session_key()
                 
                 sgt = self.encrypt_asymm(None, { # TO ENCRYPT WITH PUBLIC KEY OF SERVICE
                         'flag': '',
-                        'session_key': service_session_key,
+                        'session_key': sg_session_key,
                         'realm': '',
                         'client_id': client_id,
                         'client_address': client_address,
                         'times': ''
                         })
     
-                session_data = self.encrypt_symm(tgs_session_key, { # TO ENCRYPT WITH SYMMETRIC TGS SESSION KEY
-                        'session_key': service_session_key,
+                session_data = self.encrypt_symm(tg_session_key, { # TO ENCRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
+                        'session_key': sg_session_key,
                         'times': '',
                         'nonce': nonce,
                         'server_realm': '',

@@ -3,12 +3,14 @@ from Messages.RegisterControlApplicationMessage import RegisterControlApplicatio
 from Messages.DeviceCommandMessage import DeviceCommandMessage
 from Messages.KAuthRequestMessage import KAuthRequestMessage
 from Messages.KTicketRequestMessage import KTicketRequestMessage
+from Messages.KServiceRequestMessage import KServiceRequestMessage
 from ControlApplicationReceiverThread import ControlApplicationReceiverThread
 
 from threading import Semaphore
 from datetime import datetime
 import os
 import uuid
+import random
 
 
 class ControlApplication(CommunicationInterface):
@@ -36,11 +38,9 @@ class ControlApplication(CommunicationInterface):
         self.client_id = 0 # id of the user
         self.tgs_id = 1 # id of the ticket-granting server
         
-        # dictionary with service-granting tickets: {service_id : sgt}
-        self.tickets = {}
-        
-        # dictionary with service session keys: {service_id: session_key}
-        self.service_keys = {}
+        # dictionary with connection data per service
+        # {service_id : {sgt, sg_session_key, subkey, sequence_nr}}
+        self.services = {}
 
         self.thread = ControlApplicationReceiverThread(self)
 
@@ -87,7 +87,7 @@ class ControlApplication(CommunicationInterface):
             self.nonce = None
             
             self.tgt = message.tgt
-            self.tgs_session_key = session_data['session_key']
+            self.tg_session_key = session_data['session_key']
             
             # normally called independently, only here for demo purposes
             self.init_ticket_request(15)
@@ -96,10 +96,10 @@ class ControlApplication(CommunicationInterface):
             pass
     
     def init_ticket_request(self, service_id):
-        if self.tgt and self.tgs_session_key: # check if tgs communication is possible
+        if self.tgt and self.tg_session_key: # check if tgs communication is possible
             self.nonce = self.generate_nonce()
             
-            auth_data = self.encrypt_symm(self.tgs_session_key, { # TO ENCRYPT WITH SYMMETRIC TGS SESSION KEY
+            auth_data = self.encrypt_symm(self.tg_session_key, { # TO ENCRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
                     'client_id': self.client_id,
                     'client_realm': '',
                     'timestamp': datetime.timestamp(datetime.now())
@@ -112,23 +112,79 @@ class ControlApplication(CommunicationInterface):
             pass
     
     def handle_ticket_response(self, message):
-        session_data = self.decrypt_symm(self.tgs_session_key, message.session_data) # TO DECTYPT WITH SYMMETRIC TGS SESSION KEY
+        session_data = self.decrypt_symm(self.tg_session_key, message.session_data) # TO DECRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
         
         if session_data['nonce'] == self.nonce: # check nonce to avoid replay attacks
             self.nonce = None
             
             service_id = session_data['service_id']
-            self.tickets[service_id] = message.sgt
-            self.service_keys[service_id] = session_data['session_key']
+            self.services[service_id] = {
+                    'sgt': message.sgt,
+                    'sg_session_key': session_data['session_key'],
+                    'subkey': None,
+                    'sequence_nr': None
+                    }
             
-            print('OK')
+            # normally called independently, only here for demo purposes
+            self.init_service_request(service_id, 'photo_gallery')
         else:
             # invalid or old nonce, ignore message
+            pass
+    
+    def init_service_request(self, service_id, service_name):
+        try:
+            service_conn_data = self.services[service_id]
+            sgt = service_conn_data['sgt']
+            sg_session_key = service_conn_data['sg_session_key']
+        except KeyError:
+            # call init_ticket_request first
+            return
+        
+        if sgt and sg_session_key: # check if service communication is possible
+            service_conn_data['subkey'] = self.generate_subkey(sg_session_key)
+            service_conn_data['sequence_nr'] = random.randint(0, 2**16)
+            
+            auth_data = self.encrypt_symm(sg_session_key, { # TO ENCRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
+                    'client_id': self.client_id,
+                    'client_realm': '',
+                    'timestamp': datetime.timestamp(datetime.now()),
+                    'subkey': service_conn_data['subkey'],
+                    'sequence_nr': service_conn_data['sequence_nr']
+                    })
+            
+            self.pending_service_id = service_id
+            
+            request = KServiceRequestMessage('', sgt, auth_data)
+            self.post_message(request, service_name)
+        else:
+            # call init_ticket_request first
+            return
+    
+    def handle_service_response(self, message):
+        try:
+            service_conn_data = self.services[self.pending_service_id]
+            self.pending_service_id = None
+            
+            sg_session_key = service_conn_data['sg_session_key']
+        except KeyError:
+            # incorrect service id, ignore message
+            return
+        
+        auth_data = self.decrypt_symm(sg_session_key, message.auth_data) # TO DECRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
+        
+        if auth_data['subkey'] == service_conn_data['subkey'] and auth_data['sequence_nr'] == service_conn_data['sequence_nr']:
+            print('OK')
+        else:
+            # invalid or old sequence number, ignore message
             pass
     
     def generate_nonce(self):
         # https://stackoverflow.com/questions/5590170/what-is-the-standard-method-for-generating-a-nonce-in-python
         return uuid.uuid4().hex
+    
+    def generate_subkey(self, key):
+        # TO DO
+        return key[int(len(key)/2):]
     
     def encrypt_symm(self, key, data):
         # TO DO

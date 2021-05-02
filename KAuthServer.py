@@ -27,11 +27,11 @@ class KAuthServer(CommunicationInterface):
                 
                 nonce = request.nonce
                 tgs_id = request.tgs_id
-                tgs_session_key = self.generate_session_key()
+                tg_session_key = self.generate_session_key()
                 
                 tgt = self.encrypt_asymm(None, { # TO ENCRYPT WITH PUBLIC KEY OF TGS
                         'flag': 0,
-                        'session_key': tgs_session_key,
+                        'session_key': tg_session_key,
                         'client_realm': '',
                         'client_id': client_id,
                         'client_address': sender,
@@ -39,7 +39,7 @@ class KAuthServer(CommunicationInterface):
                         })
     
                 session_data = self.encrypt_asymm(None, { # TO ENCTYPT WITH PUBLIC KEY OF CLIENT
-                        'session_key': tgs_session_key,
+                        'session_key': tg_session_key,
                         'times': '',
                         'nonce': nonce,
                         'tgs_realm': '',
