@@ -2,6 +2,7 @@ from CommunicationInterface import CommunicationInterface
 from ControlPlatformReceiverThread import ControlPlatformReceiverThread
 from Messages.StateUpdateMessage import StateUpdateMessage
 from Messages.DeviceCommandMessage import DeviceCommandMessage
+from collections import defaultdict
 
 import os
 
@@ -31,6 +32,10 @@ class ControlPlatform(CommunicationInterface):
         # dict(application_name: [encryption_type, encryption_args])
         self.registered_control_applications = {}
 
+        # a dictionary to assign authorisation levels, device updates are allowed if auth[device] >= auth[application]
+        # 0 = very restricted device OR unrestricted application(admin)
+        self.authorisation_level = defaultdict(lambda:0)
+
         # thread that manages all incoming messages
         self.thread = ControlPlatformReceiverThread(self)
 
@@ -43,13 +48,18 @@ class ControlPlatform(CommunicationInterface):
         self.registered_devices[device_name] = [
             None, command_manual, encryption_type, encryption_args]
 
-    def register_control_application(self, application_name, encryption_type, encryption_args):
+    def register_control_application(self, application_name, credentials, authorisation_level, encryption_type, encryption_args):
         """
         Function that handles an incoming RegisterControlApplicationMessage. Used by ControlPlatformReceiverThread
 
         """
-        self.registered_control_applications[application_name] = [
-            encryption_type, encryption_args]
+        # check if the application has the right credentials
+        if credentials == "Password":
+            self.registered_control_applications[application_name] = [
+                encryption_type, encryption_args]
+            self.authorisation_level[application_name] = authorisation_level
+        else:
+            print("Application '" + application_name + "' dropped: wrong credentials")
 
     def handle_state_update(self, message):
         """
@@ -73,6 +83,11 @@ class ControlPlatform(CommunicationInterface):
                               for t in manual_of_device[message.device_state_name]]
         valid_command = (message.device_state_name in manual_of_device.keys()) and (
             message.device_state_value in valid_state_values)
+
+        # Check if the user is authorised
+        if self.authorisation_level[message.device_name] < self.authorisation_level[message.commander]:
+            print("Application '" + message.commander + "' not authorised to use device '" + message.device_name + "'")
+            valid_command = False
 
         if valid_command:
             self.post_message(message, message.device_name)
