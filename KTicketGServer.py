@@ -1,9 +1,9 @@
 from CommunicationInterface import CommunicationInterface
 from KTicketGServerReceiverThread import KTicketGServerReceiverThread
 from Messages.KTicketResponseMessage import KTicketResponseMessage
+from Encryption import encrypt_symm, decrypt_symm, generate_session_key, stringToKey
 
 import os
-import time
 
 
 class KTicketGServer(CommunicationInterface):
@@ -15,26 +15,36 @@ class KTicketGServer(CommunicationInterface):
         
         # thread that manages all incoming messages
         self.thread = KTicketGServerReceiverThread(self)
+
+        # dictionary of secret keys for each service: {service_id : key}
+        key = stringToKey("Service Password")
+        self.client_secret_key = {15 : key}
+
+        # TGS secret key
+        self.tgs_secret_key = stringToKey("TGS_key")
       
     def handle_ticket_request(self, sender, request):
         """
         TGS dialogue, slide 24 (--> TGS)
         + slide 25 (TGS -->)
         """
-        tgt = self.decrypt_asymm(None, request.tgt) # TO DECRYPT WITH PRIVATE KEY OF TGS
+        # CHANGE
+        tgt = decrypt_symm(self.tgs_secret_key, request.tgt) # TO DECRYPT WITH SECRET KEY BETWEEN AuthS - TGS
+
         client_address = tgt['client_address']
         
         if client_address == sender: # check if sender address is correct
             tg_session_key = tgt['session_key']
-            auth_data = self.decrypt_symm(tg_session_key, request.auth_data) # TO DECTYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
+            auth_data = decrypt_symm(tg_session_key, request.auth_data) # TO DECRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
             client_id = tgt['client_id']
             
             if client_id == auth_data['client_id']: # check if client id is correct
                 service_id = request.service_id
                 nonce = request.nonce
-                sg_session_key = self.generate_session_key()
-                
-                sgt = self.encrypt_asymm(None, { # TO ENCRYPT WITH PUBLIC KEY OF SERVICE
+                sg_session_key = generate_session_key()
+
+                # CHANGE
+                sgt = encrypt_symm(None, { # TO ENCRYPT WITH SECRET KEY BETWEEN Service - TGS
                         'flag': '',
                         'session_key': sg_session_key,
                         'realm': '',
@@ -43,7 +53,7 @@ class KTicketGServer(CommunicationInterface):
                         'times': ''
                         })
     
-                session_data = self.encrypt_symm(tg_session_key, { # TO ENCRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
+                session_data = encrypt_symm(tg_session_key, { # TO ENCRYPT WITH SYMMETRIC TICKET-GRANTING SESSION KEY
                         'session_key': sg_session_key,
                         'times': '',
                         'nonce': nonce,
@@ -60,29 +70,6 @@ class KTicketGServer(CommunicationInterface):
         else:
             # sender address incorrect, ignore message
             pass
-    
-    def generate_session_key(self):
-        # TO DO
-        time.sleep(0.5)
-        return 'deadbeef'
-    
-    def encrypt_symm(self, key, data):
-        # TO DO
-        return str(data).encode('utf-8').hex()
-    
-    def encrypt_asymm(self, key, data):
-        # TO DO
-        return str(data).encode('utf-8').hex()
-    
-    def decrypt_symm(self, key, data):
-        # TO DO
-        # don't use eval in final version, not safe
-        return eval(bytes.fromhex(data).decode('utf-8'))
-    
-    def decrypt_asymm(self, key, data):
-        # TO DO
-        # don't use eval in final version, not safe
-        return eval(bytes.fromhex(data).decode('utf-8'))
     
     def start(self):
         try:

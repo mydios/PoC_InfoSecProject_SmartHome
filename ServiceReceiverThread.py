@@ -22,6 +22,12 @@ class ServiceReceiverThread(Thread):
                 self.service.handle_service_request(sender, message)
             
             ###########
+
+            elif isinstance(message, ServiceCommandMessage):
+                tpl = self.service.receive_message()
+                message = tpl[1]
+                if isinstance(message, ServiceCommandMessage):
+                    self.service.return_service(message.commander)
             
             else:
                 print("Urecognized message received at " +

@@ -1,7 +1,7 @@
 from CommunicationInterface import CommunicationInterface
 from ServiceReceiverThread import ServiceReceiverThread
 from Messages.KServiceResponseMessage import KServiceResponseMessage
-
+from Encryption import stringToKey, encrypt_symm, decrypt_symm
 import os
 
 
@@ -23,6 +23,8 @@ class SmartService(CommunicationInterface):
         # dictionary with connection data per client
         # {client_id : {subkey, sequence_nr}}
         self.clients = {}
+
+        self.secret_key = stringToKey("Service Password")
         
         ###########
         
@@ -37,12 +39,13 @@ class SmartService(CommunicationInterface):
         Client/server dialogue, slide 26 (--> V)
         + slide 27 (V -->)
         """
-        sgt = self.decrypt_asymm(None, request.sgt) # TO DECRYPT WITH PRIVATE KEY OF SERVICE
+        # CHANGE
+        sgt = decrypt_symm(self.secret_key, request.sgt) # TO DECRYPT WITH SECRET KEY BETWEEN Service - TGS
         client_address = sgt['client_address']
         
         if client_address == sender: # check if sender address is correct
             sg_session_key = sgt['session_key']
-            session_data = self.decrypt_symm(sg_session_key, request.auth_data) # TO DECTYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
+            session_data = decrypt_symm(sg_session_key, request.auth_data) # TO DECRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
             client_id = sgt['client_id']
             
             if client_id == session_data['client_id']: # check if client id is correct              
@@ -51,10 +54,11 @@ class SmartService(CommunicationInterface):
                         'sequence_nr': session_data['sequence_nr']
                         }
     
-                auth_data = self.encrypt_symm(sg_session_key, { # TO ENCRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
+                auth_data = encrypt_symm(sg_session_key, { # TO ENCRYPT WITH SYMMETRIC SERVICE-GRANTING SESSION KEY
                         'timestamp': session_data['timestamp'],
                         'subkey': session_data['subkey'],
-                        'sequence_nr': session_data['sequence_nr']
+                        'sequence_nr': session_data['sequence_nr'],
+                        'data': self.data
                         })
                 
                 response = KServiceResponseMessage(auth_data)
@@ -67,22 +71,8 @@ class SmartService(CommunicationInterface):
             # sender address incorrect, ignore message
             pass
     
-    def encrypt_symm(self, key, data):
-        # TO DO
-        return str(data).encode('utf-8').hex()
-    
-    def decrypt_symm(self, key, data):
-        # TO DO
-        # don't use eval in final version, not safe
-        return eval(bytes.fromhex(data).decode('utf-8'))
-    
-    def decrypt_asymm(self, key, data):
-        # TO DO
-        # don't use eval in final version, not safe
-        return eval(bytes.fromhex(data).decode('utf-8'))
-    
     ##################################################
-    
+
     def start(self):
         try:
             os.system('clear')
