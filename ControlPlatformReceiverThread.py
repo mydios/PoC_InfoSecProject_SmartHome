@@ -3,7 +3,7 @@ from Messages.RegisterDeviceMessage import RegisterDeviceMessage
 from Messages.RegisterControlApplicationMessage import RegisterControlApplicationMessage
 from Messages.StateUpdateMessage import StateUpdateMessage
 from Messages.DeviceCommandMessage import DeviceCommandMessage
-
+from Messages.TLSMessage import *
 
 class ControlPlatformReceiverThread(Thread):
     """
@@ -35,6 +35,15 @@ class ControlPlatformReceiverThread(Thread):
 
             elif isinstance(message, DeviceCommandMessage):
                 self.control_platform.handle_device_command(message)
+            elif isinstance(message, TLSMessage):
+                if message.type == CLIENT_HELLO:
+                    self.control_platform.receive_client_hello(message)
+                if message.type == SERVER_HELLO:
+                    self.control_platform.receive_server_hello(message)
+                if message.type == FINISH_S:
+                    self.control_platform.receive_finish_server(message)
+                if message.type == FINISH_C:
+                    self.control_platform.receive_finish_client(message)
 
             else:
                 print("Urecognized message received at " +

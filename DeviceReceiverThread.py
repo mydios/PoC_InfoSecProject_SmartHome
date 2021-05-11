@@ -1,5 +1,6 @@
 from threading import Thread
 from Messages.DeviceCommandMessage import DeviceCommandMessage
+from Messages.TLSMessage import *
 
 class DeviceReceiverThread(Thread):
     """
@@ -19,4 +20,14 @@ class DeviceReceiverThread(Thread):
             message = tpl[1]
             if isinstance(message, DeviceCommandMessage):
                 self.device._change_state(message.device_state_name, message.device_state_value)
+            elif isinstance(message, TLSMessage):
+                if message.type == CLIENT_HELLO:
+                    self.device.receive_client_hello(message)
+                if message.type == SERVER_HELLO:
+                    self.device.receive_server_hello(message)
+                if message.type == FINISH_S:
+                    self.device.receive_finish_server(message)
+                if message.type == FINISH_C:
+                    self.device.receive_finish_client(message)
+            
 

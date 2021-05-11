@@ -11,6 +11,7 @@ from datetime import datetime
 import os
 import uuid
 import random
+import time
 
 
 class ControlApplication(CommunicationInterface):
@@ -209,9 +210,6 @@ class ControlApplication(CommunicationInterface):
             # invalid or old sequence number, ignore message
             pass
     
-    def generate_nonce(self):
-        # https://stackoverflow.com/questions/5590170/what-is-the-standard-method-for-generating-a-nonce-in-python
-        return uuid.uuid4().hex
     
     def generate_subkey(self, key):
         # TO DO
@@ -243,8 +241,13 @@ class ControlApplication(CommunicationInterface):
                 pass
             pass
         # register with control platform
+
         self._register()
         self.thread.start()
+
+        time.sleep(1)
+        
+        self.init_auth_request()
 
         # CLI
         while True:

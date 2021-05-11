@@ -1,5 +1,6 @@
 from threading import Thread
 from Messages.KTicketRequestMessage import KTicketRequestMessage
+from Messages.TLSMessage import *
 
 class KTicketGServerReceiverThread(Thread):
     """
@@ -17,7 +18,16 @@ class KTicketGServerReceiverThread(Thread):
 
             if isinstance(message, KTicketRequestMessage):
                 self.ticket_server.handle_ticket_request(sender, message)
+            elif isinstance(message, TLSMessage):
+                if message.type == CLIENT_HELLO:
+                    self.ticket_server.receive_client_hello(message)
+                if message.type == SERVER_HELLO:
+                    self.ticket_server.receive_server_hello(message)
+                if message.type == FINISH_S:
+                    self.ticket_server.receive_finish_server(message)
+                if message.type == FINISH_C:
+                    self.ticket_server.receive_finish_client(message)
 
             else:
-                print("Urecognized message received at " +
+                print("Unrecognized message received at " +
                       self.ticket_server.name+": "+str(message))

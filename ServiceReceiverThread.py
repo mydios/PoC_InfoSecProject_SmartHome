@@ -1,5 +1,6 @@
 from threading import Thread
 from Messages.KServiceRequestMessage import KServiceRequestMessage
+from Messages.TLSMessage import *
 
 class ServiceReceiverThread(Thread):
     """
@@ -20,6 +21,15 @@ class ServiceReceiverThread(Thread):
 
             if isinstance(message, KServiceRequestMessage):
                 self.service.handle_service_request(sender, message)
+            elif isinstance(message, TLSMessage):
+                if message.type == CLIENT_HELLO:
+                    self.service.receive_client_hello(message)
+                if message.type == SERVER_HELLO:
+                    self.service.receive_server_hello(message)
+                if message.type == FINISH_S:
+                    self.service.receive_finish_server(message)
+                if message.type == FINISH_C:
+                    self.service.receive_finish_client(message)
             
             ###########
             
