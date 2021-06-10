@@ -97,6 +97,15 @@ class Broker(object):
                         d.append(m)
                 print(tabulate(d, headers = ["SENDER", "MESSAGE", "DESTINATION", "TIMESTAMP"]))
                 continue
+            if u_in == 'print_messages -short':
+                d = []
+                for m in self.history:
+                    if not isinstance(m[1], StateUpdateMessage):
+                        m_ = list(m)
+                        m_[1] = str(m_[1])[:50]
+                        d.append(m_)
+                print(tabulate(d, headers = ["SENDER", "MESSAGE", "DESTINATION", "TIMESTAMP"]))
+                continue
             
             print("Unrecognized command")
             
