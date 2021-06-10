@@ -80,13 +80,14 @@ class CommunicationInterface(object):
         # The actual python object sent is a pickled tuple of the form (string, object, string)=(sender_name, message, destination_name)
         # Encryption is performed using encryption factory function _encrypt
 
-        if destination not in self.tls_connections and destination is not None:
-            self.to_send = {"message":message, "destination": destination}
-            self.send_pending = True
-            return self.setup_tls_connection(destination)
-        if not isinstance(message, TLSMessage) and destination is not None:
-            while not self.tls_connections[destination]["ready"]:
-                pass
+        if self.tls:
+            if destination not in self.tls_connections and destination is not None:
+                self.to_send = {"message":message, "destination": destination}
+                self.send_pending = True
+                return self.setup_tls_connection(destination)
+            if not isinstance(message, TLSMessage) and destination is not None:
+                while not self.tls_connections[destination]["ready"]:
+                    pass
 
         message = self._encrypt(
             message, destination)
@@ -241,12 +242,20 @@ class CommunicationInterface(object):
         This function decrypts all messages that are received by this CommunicationInterface class.
         """
         if (source in self.tls_connections) and self.tls_connections[source]["ready"]:
+            print("\n======================")
+            print("Received an encrypted message")
             print(message)
-            encrypted_message = message[1].encrypted_data
-            decrypted_message = self.tls_connections[source]["box"].decrypt(encrypted_message)
-            message = (message[0], pickle.loads(decrypted_message), message[2])
-            print(message)
-            return message
+            print("======================")
+            try:
+                encrypted_message = message[1].encrypted_data
+                decrypted_message = self.tls_connections[source]["box"].decrypt(encrypted_message)
+                message = (message[0], pickle.loads(decrypted_message), message[2])
+                print("Decrypted Message")
+                print(message)
+                print("======================")
+                return message
+            except:
+                print("This message was tampered with and is therefore dropped.")
 
         #DECRYPT A MESSAGE
         if self.encryption_type == "no_encryption":
